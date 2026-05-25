@@ -8,4 +8,7 @@ __pycache__/
 
 results/tokenizer/*.jsonl
 results/tokenizer/*.csv
+results/tokenizer/*/raw.jsonl
+results/tokenizer/*/summary.csv
+results/tokenizer/*/metadata.json
 !results/tokenizer/.gitkeep

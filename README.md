@@ -67,9 +67,12 @@ python -m pip install transformers sentencepiece pyyaml pandas pytest jinja2
 python3 src/indicservebench/prompt_schema.py prompts/prototype_prompts.jsonl
 python -m pytest tests
 python src/indicservebench/tokenizer_analysis.py
+python src/indicservebench/token_fragment_inspect.py
 ```
 
 Actual tokenizer counts require a Python environment with `transformers` and `jinja2` available. If `transformers`, a tokenizer, or a chat template cannot load, the tokenizer-analysis script records structured failure rows instead of crashing the whole run.
+
+The tokenizer diagnostic writes each run to `results/tokenizer/<experiment_id>/` with `raw.jsonl`, `summary.csv`, and `metadata.json`. It records raw user-prompt token counts, formatted chat-template token counts, and template overhead. This diagnostic identifies tokenizer and chat-template differences. Actual serving latency will be measured later on GPU.
 
 ## Limitations
 
