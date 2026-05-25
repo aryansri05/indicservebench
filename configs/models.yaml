@@ -69,3 +69,25 @@ models:
       preferred_initial: "bf16"
       confirmed_for_one_h100: false
       todo: "Verify dtype, memory footprint, thinking-mode behavior, and one-H100 feasibility."
+
+  - model_id: "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"
+    short_name: "qwen3_30b_a3b_instruct_2507_fp8"
+    role: "global_multilingual_moe_control"
+    public_model_page: "https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507-FP8"
+    notes: "official FP8 Qwen checkpoint; candidate comparison model for Sarvam"
+    architecture_todo: "Verify official MoE architecture details, active-parameter behavior, context limit, and FP8 serving requirements from model/runtime documentation."
+    runtime_status:
+      sglang: "Not tested. GPU priority is lower than Sarvam FP8 smoke test."
+      vllm: "Not tested. GPU priority is lower than Sarvam FP8 smoke test."
+    tokenizer:
+      loader: "AutoTokenizer.from_pretrained"
+      trust_remote_code: false
+      allow_cli_trust_remote_code_override: true
+    context:
+      documented_limit: null
+      confirmed_for_benchmark: false
+      todo: "Confirm exact context limit from official model config/docs before any serving test."
+    precision:
+      preferred_initial: "fp8"
+      confirmed_for_one_h100: false
+      todo: "Verify one-H100 launch approach only after Sarvam FP8 compatibility smoke test succeeds."
