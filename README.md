@@ -60,12 +60,16 @@ This milestone creates documentation, prompt schemas, prototype natural prompts,
 CPU-only checks:
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install transformers sentencepiece pyyaml pandas pytest jinja2
 python3 src/indicservebench/prompt_schema.py prompts/prototype_prompts.jsonl
-python3 -m pytest tests
-python3 src/indicservebench/tokenizer_analysis.py
+python -m pytest tests
+python src/indicservebench/tokenizer_analysis.py
 ```
 
-Actual tokenizer counts require a Python environment with `transformers` available. If `transformers`, a tokenizer, or a chat template cannot load, the tokenizer-analysis script records structured failure rows instead of crashing the whole run.
+Actual tokenizer counts require a Python environment with `transformers` and `jinja2` available. If `transformers`, a tokenizer, or a chat template cannot load, the tokenizer-analysis script records structured failure rows instead of crashing the whole run.
 
 ## Limitations
 
