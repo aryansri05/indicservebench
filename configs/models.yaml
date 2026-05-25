@@ -1,0 +1,71 @@
+schema_version: "1.0"
+project: indicservebench
+status: pre_gpu_planning
+notes:
+  - "This file is configuration metadata for CPU-only tokenizer analysis and later feasibility tracking."
+  - "It must not be interpreted as proof that a model launches under any serving runtime."
+  - "Tokenizer loading may download tokenizer/config files, but implementation must not download model weights."
+
+models:
+  - model_id: "sarvamai/sarvam-30b"
+    short_name: "sarvam_30b"
+    role: "headline_indian_language_model"
+    public_model_page: "https://huggingface.co/sarvamai/sarvam-30b"
+    architecture_todo: "Verify MoE, approximately 30B total parameters, and approximately 2.4B active non-embedding parameters from official docs/config."
+    runtime_status:
+      sglang: "Sarvam-specific smoke-test runtime because the public NVIDIA/Sarvam study used SGLang; not yet run."
+      vllm: "Early common-runtime candidate due to current vLLM registry coverage; not yet run."
+    tokenizer:
+      loader: "AutoTokenizer.from_pretrained"
+      trust_remote_code: false
+      allow_cli_trust_remote_code_override: true
+    context:
+      documented_limit: null
+      confirmed_for_benchmark: false
+      todo: "Confirm exact context limit from official model config/docs before long-context testing."
+    precision:
+      preferred_initial: "bf16"
+      confirmed_for_one_h100: false
+      todo: "Verify BF16/FP8/quantization feasibility and fairness before GPU use."
+
+  - model_id: "krutrim-ai-labs/Krutrim-2-instruct"
+    short_name: "krutrim_2_instruct"
+    role: "dense_indian_language_instruction_comparison"
+    public_model_page: "https://huggingface.co/krutrim-ai-labs/Krutrim-2-instruct"
+    architecture_todo: "Verify 12B dense model details, Mistral-NeMo architecture notes, and Indic positioning from official docs/config."
+    runtime_status:
+      sglang: "Unknown until direct smoke test."
+      vllm: "Unknown until direct smoke test."
+    tokenizer:
+      loader: "AutoTokenizer.from_pretrained"
+      trust_remote_code: false
+      allow_cli_trust_remote_code_override: true
+    context:
+      documented_limit: 128000
+      confirmed_for_benchmark: false
+      todo: "Confirm 128K context support and actual serving behavior under the selected runtime."
+    precision:
+      preferred_initial: "bf16"
+      confirmed_for_one_h100: false
+      todo: "Verify dtype, memory footprint, chat template, and trust_remote_code requirements."
+
+  - model_id: "bharatgenai/Param2-17B-A2.4B-Thinking"
+    short_name: "bharatgen_param2_thinking"
+    role: "public_indian_multilingual_moe_comparison"
+    public_model_page: "https://huggingface.co/bharatgenai/Param2-17B-A2.4B-Thinking"
+    architecture_todo: "Verify Hybrid MoE architecture, 17B total parameters, approximately 2.4B active parameters, and language support from official docs/config."
+    runtime_status:
+      sglang: "Documented launch path requires direct smoke test."
+      vllm: "Early common-runtime candidate due to current vLLM supported-model coverage; not yet run."
+    tokenizer:
+      loader: "AutoTokenizer.from_pretrained"
+      trust_remote_code: false
+      allow_cli_trust_remote_code_override: true
+    context:
+      documented_limit: 4096
+      confirmed_for_benchmark: false
+      todo: "Confirm exact limit. Reject any prompt where formatted input tokens plus requested output exceed the confirmed context limit."
+    precision:
+      preferred_initial: "bf16"
+      confirmed_for_one_h100: false
+      todo: "Verify dtype, memory footprint, thinking-mode behavior, and one-H100 feasibility."
