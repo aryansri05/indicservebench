@@ -35,7 +35,7 @@ except ImportError:
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-LANGUAGE_ORDER = ("hi", "ta", "hinglish")
+LANGUAGE_ORDER = ("en", "hi", "ta", "hinglish")
 SMOKE_MAX_TOKENS = 32
 
 RESULT_FIELDS = (
@@ -74,7 +74,19 @@ def chat_completions_url(server_base_url: str) -> str:
 
 
 def select_smoke_prompts(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Select exactly one existing short natural prompt per language."""
+    """Select one short natural prompt per language, preferring one intent group."""
+
+    expected_languages = set(LANGUAGE_ORDER)
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for record in records:
+        if record["suite_type"] == "natural" and record["workload_type"] == "short_128":
+            groups.setdefault(record["parallel_group_id"], []).append(record)
+
+    for group_id in sorted(groups):
+        group_records = groups[group_id]
+        by_language = {record["language"]: record for record in group_records}
+        if set(by_language) == expected_languages:
+            return [by_language[language] for language in LANGUAGE_ORDER]
 
     selected: list[dict[str, Any]] = []
     for language in LANGUAGE_ORDER:
@@ -92,8 +104,8 @@ def select_smoke_prompts(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
             raise ValueError(f"No short natural prompt found for language '{language}'")
         selected.append(candidates[0])
 
-    if len(selected) != 3:
-        raise ValueError("Smoke test must select exactly three prompts")
+    if len(selected) != len(LANGUAGE_ORDER):
+        raise ValueError("Smoke test must select exactly four prompts")
     return selected
 
 
@@ -364,7 +376,7 @@ def write_metadata(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run a three-prompt OpenAI-compatible streaming smoke test."
+        description="Run a four-prompt OpenAI-compatible streaming smoke test."
     )
     parser.add_argument("--server-base-url", required=True)
     parser.add_argument("--model-id", required=True)

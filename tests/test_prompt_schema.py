@@ -23,14 +23,14 @@ def test_prototype_prompts_are_valid() -> None:
     assert validate_prompt_records(records) == []
 
 
-def test_prototype_prompt_scope_is_exactly_12_groups_and_36_records() -> None:
+def test_prototype_prompt_scope_is_exactly_12_groups_and_48_records() -> None:
     records = load_prompt_jsonl(PROMPTS_PATH)
     groups = {record["parallel_group_id"] for record in records}
-    assert len(records) == 36
+    assert len(records) == 48
     assert len(groups) == 12
 
 
-def test_each_group_has_hindi_tamil_and_hinglish() -> None:
+def test_each_group_has_hindi_tamil_hinglish_and_english() -> None:
     records = load_prompt_jsonl(PROMPTS_PATH)
     expected_languages = set(LANGUAGE_TO_SCRIPT)
     by_group: dict[str, set[str]] = {}

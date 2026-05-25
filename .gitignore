@@ -11,6 +11,7 @@ results/tokenizer/*.csv
 results/tokenizer/*/raw.jsonl
 results/tokenizer/*/summary.csv
 results/tokenizer/*/metadata.json
+results/tokenizer/*/validation.json
 !results/tokenizer/.gitkeep
 
 results/streaming_smoke/*/raw.jsonl

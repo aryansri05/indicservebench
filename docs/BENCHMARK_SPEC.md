@@ -20,11 +20,15 @@ No extra models are part of v1 unless the project scope is explicitly revised.
 
 ## Language Groups
 
-The benchmark contains exactly three language groups:
+The primary benchmark contains exactly three Indic workload groups:
 
 - Hindi: Devanagari script.
 - Tamil: Tamil script.
 - Hinglish: Hindi-English code-mixed text primarily in Latin script.
+
+English is included only as `reference_control` for tokenizer diagnostics and
+smoke-test sanity checks. It is not a primary Indic workload and must not change
+the headline v1 scope.
 
 ## Prompt Suites
 
@@ -32,7 +36,7 @@ The benchmark contains exactly three language groups:
 
 Purpose: measure realistic user-facing serving behavior, including natural tokenizer differences.
 
-Each `parallel_group_id` contains Hindi, Tamil, and Hinglish versions of the same intent. The wording should be natural in each language, not a literal translation. Suite A is not token-controlled. If one language produces more formatted tokens, higher latency may partly reflect tokenizer behavior.
+Each `parallel_group_id` contains Hindi, Tamil, Hinglish, and English reference-control versions of the same intent. The wording should be natural in each language, not a literal translation. Suite A is not token-controlled. If one language produces more formatted tokens, higher latency may partly reflect tokenizer behavior.
 
 The current repository contains only prototype Suite A prompts in `prompts/prototype_prompts.jsonl`.
 

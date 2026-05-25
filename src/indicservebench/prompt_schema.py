@@ -35,6 +35,7 @@ LANGUAGE_TO_SCRIPT = {
     "hi": "Devanagari",
     "ta": "Tamil",
     "hinglish": "Latin",
+    "en": "Latin",
 }
 
 ALLOWED_SUITE_TYPES = {"natural", "token_controlled"}
@@ -176,9 +177,9 @@ def validate_prompt_records(
         expected_languages = set(LANGUAGE_TO_SCRIPT)
         for group_id, group_records in sorted(groups.items()):
             languages = {record.get("language") for record in group_records}
-            if len(group_records) != 3 or languages != expected_languages:
+            if len(group_records) != len(expected_languages) or languages != expected_languages:
                 errors.append(
-                    f"{group_id}: expected exactly one hi, ta, and hinglish record"
+                    f"{group_id}: expected exactly one hi, ta, hinglish, and en record"
                 )
 
             for field in (
@@ -258,7 +259,7 @@ def main() -> int:
     parser.add_argument(
         "--no-triplet-check",
         action="store_true",
-        help="Disable the requirement that each parallel group contains hi/ta/hinglish.",
+        help="Disable the requirement that each parallel group contains hi/ta/hinglish/en.",
     )
     args = parser.parse_args()
 

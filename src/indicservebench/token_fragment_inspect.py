@@ -36,7 +36,7 @@ except ImportError:
     )
 
 
-LANGUAGE_ORDER = ("hi", "ta", "hinglish")
+LANGUAGE_ORDER = ("hi", "ta", "hinglish", "en")
 
 
 def select_one_prompt_per_language(records: list[dict[str, Any]]) -> list[dict[str, Any]]:

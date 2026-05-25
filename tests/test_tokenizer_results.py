@@ -14,6 +14,7 @@ from indicservebench.tokenizer_analysis import (  # noqa: E402
     RAW_RESULT_FIELDS,
     SUMMARY_FIELDS,
     build_row,
+    count_raw_user_prompt_tokens,
     prepare_experiment_paths,
     summarize_rows,
     token_count_from_tokenized,
@@ -152,3 +153,27 @@ def test_token_count_accepts_batch_encoding_like_objects() -> None:
     count, error = token_count_from_tokenized(FakeBatchEncoding())
     assert count == 3
     assert error is None
+
+
+def test_raw_token_count_uses_only_user_prompt() -> None:
+    class RecordingTokenizer:
+        def __init__(self) -> None:
+            self.text_seen: str | None = None
+            self.add_special_tokens_seen: bool | None = None
+
+        def __call__(self, text: str, add_special_tokens: bool) -> dict[str, list[int]]:
+            self.text_seen = text
+            self.add_special_tokens_seen = add_special_tokens
+            return {"input_ids": [1, 2, 3]}
+
+    tokenizer = RecordingTokenizer()
+    record = sample_prompt_record()
+    record["system_prompt"] = "SYSTEM TEXT SHOULD NOT BE COUNTED"
+    record["context_text"] = "CONTEXT TEXT SHOULD NOT BE COUNTED"
+
+    count, error = count_raw_user_prompt_tokens(tokenizer, record)
+
+    assert count == 3
+    assert error is None
+    assert tokenizer.text_seen == record["user_prompt"]
+    assert tokenizer.add_special_tokens_seen is False

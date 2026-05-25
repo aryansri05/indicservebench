@@ -25,8 +25,9 @@ def test_selects_exactly_one_short_natural_prompt_per_language() -> None:
     records = load_prompt_jsonl(PROMPTS_PATH)
     selected = select_smoke_prompts(records)
 
-    assert len(selected) == 3
-    assert [record["language"] for record in selected] == ["hi", "ta", "hinglish"]
+    assert len(selected) == 4
+    assert [record["language"] for record in selected] == ["en", "hi", "ta", "hinglish"]
+    assert {record["parallel_group_id"] for record in selected} == {"nat_001"}
     assert {record["suite_type"] for record in selected} == {"natural"}
     assert {record["workload_type"] for record in selected} == {"short_128"}
 

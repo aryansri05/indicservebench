@@ -1,6 +1,6 @@
 # IndicServeBench
 
-IndicServeBench is a planned public benchmark for self-hosted streaming text-generation inference on Indian-language LLM workloads. The project focuses on Hindi in Devanagari, Tamil in Tamil script, and Hinglish in Latin script.
+IndicServeBench is a planned public benchmark for self-hosted streaming text-generation inference on Indian-language LLM workloads. The project focuses on Hindi in Devanagari, Tamil in Tamil script, and Hinglish in Latin script. English appears only as a reference-control language for tokenizer diagnostics and smoke-test sanity checks.
 
 Current status: pre-GPU milestone. No benchmark results exist yet.
 

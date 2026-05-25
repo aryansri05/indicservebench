@@ -16,8 +16,9 @@ It is a minimal serving smoke test.
 
 - Model to test: `sarvamai/sarvam-30b-fp8`
 - GPU: one H100 only
-- Prompt count: three existing short natural prompts only
-- Languages: one Hindi, one Tamil, one Hinglish prompt
+- Prompt count: four existing short natural prompts only
+- Languages: one English, one Hindi, one Tamil, one Hinglish prompt
+- Selection: prefer all four prompts from the same intent group
 - Output cap: 32 tokens
 - Concurrency: 1
 - Maximum session duration: 60 minutes
@@ -61,7 +62,7 @@ python src/indicservebench/streaming_smoke_client.py \
   --run-id "first_h100_sarvam_fp8_smoke"
 ```
 
-The client sends exactly three streaming chat-completion requests with
+The client sends exactly four streaming chat-completion requests with
 `max_tokens=32` and writes each result immediately to:
 
 ```text
