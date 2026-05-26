@@ -21,3 +21,10 @@ results/t4_reproduction/*/raw_requests.jsonl
 results/t4_reproduction/*/aggregate_summary.csv
 results/t4_reproduction/*/slowest_requests.csv
 results/t4_reproduction/*/metadata.json
+
+results/h100_transformers_pilot/*/raw_requests.jsonl
+results/h100_transformers_pilot/*/summary_by_language.csv
+results/h100_transformers_pilot/*/metadata.json
+results/h100_transformers_pilot/*/human_readable_summary.md
+results/h100_transformers_pilot/*/comparison_summary.csv
+results/h100_transformers_pilot/*/comparison_summary.md
