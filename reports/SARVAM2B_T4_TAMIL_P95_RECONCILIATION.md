@@ -128,3 +128,16 @@ statement is:
 
 This old Sarvam-2B T4 result and the newer Sarvam-30B/Qwen tokenizer diagnostic
 are related motivation only. They are not directly comparable evidence.
+
+## Planned Controlled Reproduction
+
+The prior Tamil P95/max observation is treated as motivation only. A controlled
+Sarvam-2B/T4 reproduction runner has been prepared to rerun the exact recovered
+Hindi, Tamil, and code-mixed prompts while preserving request-level latency,
+input-token counts, output-token counts, prompt IDs, GPU metadata, and failure
+status.
+
+The reproduction will use warmup rows, shuffled measured request order, and
+linear-interpolated P90/P95 aggregation rather than repeating the old
+max-as-P95 summary behavior. No attention-layer or CUDA/kernel bottleneck is
+currently claimed.

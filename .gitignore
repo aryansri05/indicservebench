@@ -16,3 +16,8 @@ results/tokenizer/*/validation.json
 
 results/streaming_smoke/*/raw.jsonl
 results/streaming_smoke/*/metadata.json
+
+results/t4_reproduction/*/raw_requests.jsonl
+results/t4_reproduction/*/aggregate_summary.csv
+results/t4_reproduction/*/slowest_requests.csv
+results/t4_reproduction/*/metadata.json
