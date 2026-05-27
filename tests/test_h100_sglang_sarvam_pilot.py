@@ -12,7 +12,7 @@ from indicservebench.h100_sglang_sarvam_pilot import (  # noqa: E402
     CLAIM_BOUNDARY,
     EXPERIMENT_TYPE,
     LANGUAGE_ORDER,
-    MODEL_ID,
+    MODEL_CONFIGS,
     RUNTIME,
     build_requests,
     make_raw_record,
@@ -36,9 +36,12 @@ def sample_record(
     warmup_or_measured: str = "measured",
     success: bool = True,
     ttft_ms: float = 100.0,
+    model_label: str = "sarvam",
 ) -> dict[str, object]:
     return make_raw_record(
         experiment_id="unit_exp",
+        model_label=model_label,
+        model_id=MODEL_CONFIGS[model_label]["model_id"],
         base_url="http://127.0.0.1:30000/",
         prompt_record={"prompt_id": prompt_id, "language": language, "user_prompt": "hello"},
         raw_user_prompt_tokens=10 if success else None,
@@ -100,8 +103,17 @@ def test_raw_schema() -> None:
     row = sample_record()
 
     assert row["experiment_type"] == EXPERIMENT_TYPE
-    assert row["model_id"] == MODEL_ID
+    assert row["model_id"] == MODEL_CONFIGS["sarvam"]["model_id"]
+    assert row["model_label"] == "sarvam"
     assert row["runtime"] == RUNTIME
+    assert validate_raw_record(row) == []
+
+
+def test_raw_schema_accepts_qwen_model_label() -> None:
+    row = sample_record(model_label="qwen")
+
+    assert row["model_id"] == MODEL_CONFIGS["qwen"]["model_id"]
+    assert row["model_label"] == "qwen"
     assert validate_raw_record(row) == []
 
 

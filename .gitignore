@@ -33,3 +33,8 @@ results/sarvam_h100_sglang_pilot/*/raw_requests.jsonl
 results/sarvam_h100_sglang_pilot/*/summary_by_language.csv
 results/sarvam_h100_sglang_pilot/*/metadata.json
 results/sarvam_h100_sglang_pilot/*/human_readable_summary.md
+
+results/qwen_h100_sglang_pilot/*/raw_requests.jsonl
+results/qwen_h100_sglang_pilot/*/summary_by_language.csv
+results/qwen_h100_sglang_pilot/*/metadata.json
+results/qwen_h100_sglang_pilot/*/human_readable_summary.md

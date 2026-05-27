@@ -1,4 +1,4 @@
-"""Sarvam H100 SGLang OpenAI-compatible streaming pilot client.
+"""H100 SGLang OpenAI-compatible streaming pilot client.
 
 This client assumes an SGLang server is already running on the H100 pod. It is
 CPU-importable for tests and performs only HTTP client-side measurement.
@@ -47,9 +47,23 @@ DEFAULT_PROMPTS_PATH = PROJECT_ROOT / "prompts" / "prototype_prompts.jsonl"
 DEFAULT_OUTPUT_ROOT = Path("/workspace/indicservebench_results/sarvam_h100_sglang_pilot")
 DEFAULT_BASE_URL = "http://127.0.0.1:30000"
 
-EXPERIMENT_TYPE = "preliminary_sarvam_h100_sglang_streaming_pilot"
+EXPERIMENT_TYPE = "preliminary_h100_sglang_streaming_pilot"
 RUNTIME = "sglang_openai_compatible_streaming"
-MODEL_ID = "sarvamai/sarvam-30b-fp8"
+MODEL_CONFIGS = {
+    "sarvam": {
+        "model_id": "sarvamai/sarvam-30b-fp8",
+        "trust_remote_code": True,
+        "title": "Sarvam H100 SGLang Streaming Pilot",
+        "meeting_label": "preliminary Sarvam-30B-FP8 H100 SGLang streaming pilot",
+    },
+    "qwen": {
+        "model_id": "Qwen/Qwen3-30B-A3B-Instruct-2507-FP8",
+        "trust_remote_code": False,
+        "title": "Qwen H100 SGLang Streaming Pilot",
+        "meeting_label": "preliminary Qwen3-30B-A3B-FP8 H100 SGLang streaming pilot",
+    },
+}
+MODEL_ID = MODEL_CONFIGS["sarvam"]["model_id"]
 DEFAULT_SEED = 42
 DEFAULT_MAX_TOKENS = 32
 
@@ -58,6 +72,7 @@ RAW_FIELDS = (
     "experiment_type",
     "timestamp_utc",
     "model_id",
+    "model_label",
     "runtime",
     "base_url",
     "prompt_id",
@@ -95,9 +110,9 @@ SUMMARY_FIELDS = (
 )
 
 CLAIM_BOUNDARY = (
-    "This is a preliminary Sarvam-30B-FP8 H100 SGLang streaming pilot, single "
-    "concurrency, using the frozen natural prompt suite. It is not a production "
-    "benchmark and does not establish a CUDA/kernel bottleneck or a causal "
+    "This is a preliminary H100 SGLang streaming pilot, single concurrency, "
+    "using the frozen natural prompt suite. It is not a production benchmark "
+    "and does not establish a CUDA/kernel bottleneck or a causal "
     "tokenizer-latency claim."
 )
 
@@ -106,9 +121,9 @@ def utc_now_iso() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="milliseconds")
 
 
-def default_experiment_id(mode: str) -> str:
+def default_experiment_id(model_label: str, mode: str) -> str:
     stamp = utc_now_iso().replace("-", "").replace(":", "").replace("+00:00", "Z")
-    return f"sarvam_h100_sglang_{mode}_{stamp}"
+    return f"{model_label}_h100_sglang_{mode}_{stamp}"
 
 
 def select_smoke_prompts(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -239,6 +254,8 @@ def request_streaming_completion(
 def make_raw_record(
     *,
     experiment_id: str,
+    model_label: str,
+    model_id: str,
     base_url: str,
     prompt_record: dict[str, Any],
     raw_user_prompt_tokens: int | None,
@@ -262,7 +279,8 @@ def make_raw_record(
         "experiment_id": experiment_id,
         "experiment_type": EXPERIMENT_TYPE,
         "timestamp_utc": utc_now_iso(),
-        "model_id": MODEL_ID,
+        "model_id": model_id,
+        "model_label": model_label,
         "runtime": RUNTIME,
         "base_url": normalize_base_url(base_url),
         "prompt_id": prompt_record["prompt_id"],
@@ -294,8 +312,10 @@ def validate_raw_record(record: dict[str, Any]) -> list[str]:
         return errors
     if record["experiment_type"] != EXPERIMENT_TYPE:
         errors.append(f"experiment_type must be {EXPERIMENT_TYPE}")
-    if record["model_id"] != MODEL_ID:
-        errors.append(f"model_id must be {MODEL_ID}")
+    if record["model_label"] not in MODEL_CONFIGS:
+        errors.append("model_label must be sarvam or qwen")
+    elif record["model_id"] != MODEL_CONFIGS[record["model_label"]]["model_id"]:
+        errors.append("model_id does not match model_label")
     if record["runtime"] != RUNTIME:
         errors.append(f"runtime must be {RUNTIME}")
     if record["language"] not in LANGUAGE_ORDER:
@@ -391,11 +411,19 @@ def write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
             writer.writerow({field: "" if row.get(field) is None else row.get(field) for field in SUMMARY_FIELDS})
 
 
-def render_summary_markdown(summary: list[dict[str, Any]]) -> str:
+def render_summary_markdown(
+    summary: list[dict[str, Any]],
+    *,
+    model_label: str = "sarvam",
+    model_id: str = MODEL_ID,
+) -> str:
+    config = MODEL_CONFIGS[model_label]
     lines = [
-        "# Sarvam H100 SGLang Streaming Pilot",
+        f"# {config['title']}",
         "",
         CLAIM_BOUNDARY,
+        "",
+        f"- Model: `{model_label}` (`{model_id}`)",
         "",
         "| Language | n | successes | median TTFT ms | p90 TTFT ms | median total ms | mean raw toks | mean formatted toks | mean output toks | mean tok/s |",
         "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
@@ -412,18 +440,19 @@ def render_summary_markdown(summary: list[dict[str, Any]]) -> str:
     lines.extend(
         [
             "",
-            "Meeting wording: preliminary Sarvam-30B-FP8 H100 SGLang streaming pilot, single concurrency, frozen 48-prompt natural suite. Do not describe this as production performance.",
+            f"Meeting wording: {config['meeting_label']}, single concurrency, frozen 48-prompt natural suite. Do not describe this as production performance.",
         ]
     )
     return "\n".join(lines) + "\n"
 
 
-def load_tokenizer(local_files_only: bool) -> Any:
+def load_tokenizer(model_label: str, local_files_only: bool) -> Any:
     from transformers import AutoTokenizer  # type: ignore
 
+    config = MODEL_CONFIGS[model_label]
     return AutoTokenizer.from_pretrained(
-        MODEL_ID,
-        trust_remote_code=True,
+        config["model_id"],
+        trust_remote_code=bool(config["trust_remote_code"]),
         local_files_only=local_files_only,
     )
 
@@ -437,7 +466,9 @@ def run_client(args: argparse.Namespace) -> int:
     import requests  # type: ignore
 
     mode = "smoke" if args.smoke else "pilot"
-    experiment_id = args.experiment_id or default_experiment_id(mode)
+    model_label = args.model
+    model_id = MODEL_CONFIGS[model_label]["model_id"]
+    experiment_id = args.experiment_id or default_experiment_id(model_label, mode)
     run_dir = args.output_root / experiment_id
     raw_path = run_dir / "raw_requests.jsonl"
     run_dir.mkdir(parents=True, exist_ok=True)
@@ -447,7 +478,8 @@ def run_client(args: argparse.Namespace) -> int:
         "experiment_id": experiment_id,
         "experiment_type": EXPERIMENT_TYPE,
         "runtime": RUNTIME,
-        "model_id": MODEL_ID,
+        "model_id": model_id,
+        "model_label": model_label,
         "base_url": normalize_base_url(args.base_url),
         "mode": mode,
         "command": " ".join(sys.argv),
@@ -466,7 +498,7 @@ def run_client(args: argparse.Namespace) -> int:
 
     try:
         health_check(requests, args.base_url, args.timeout_seconds)
-        tokenizer = load_tokenizer(args.local_files_only)
+        tokenizer = load_tokenizer(model_label, args.local_files_only)
         prompts = load_natural_prompt_suite(args.prompts)
         requests_to_run = build_requests(prompts, smoke=args.smoke, seed=args.seed)
 
@@ -480,7 +512,7 @@ def run_client(args: argparse.Namespace) -> int:
                 measurement = request_streaming_completion(
                     requests_module=requests,
                     base_url=args.base_url,
-                    model_id=MODEL_ID,
+                    model_id=model_id,
                     messages=prompt_messages(prompt_record),
                     max_tokens=args.max_tokens,
                     temperature=args.temperature,
@@ -490,6 +522,8 @@ def run_client(args: argparse.Namespace) -> int:
                 output_tokens = encode_len(tokenizer, generated_text)
                 row = make_raw_record(
                     experiment_id=experiment_id,
+                    model_label=model_label,
+                    model_id=model_id,
                     base_url=args.base_url,
                     prompt_record=prompt_record,
                     raw_user_prompt_tokens=raw_tokens,
@@ -509,6 +543,8 @@ def run_client(args: argparse.Namespace) -> int:
             except Exception as exc:  # noqa: BLE001 - preserve benchmark failure
                 row = make_raw_record(
                     experiment_id=experiment_id,
+                    model_label=model_label,
+                    model_id=model_id,
                     base_url=args.base_url,
                     prompt_record=prompt_record,
                     raw_user_prompt_tokens=raw_tokens,
@@ -545,7 +581,7 @@ def run_client(args: argparse.Namespace) -> int:
         summary = summarize_records(rows)
         write_csv(run_dir / "summary_by_language.csv", summary)
         (run_dir / "human_readable_summary.md").write_text(
-            render_summary_markdown(summary),
+            render_summary_markdown(summary, model_label=model_label, model_id=model_id),
             encoding="utf-8",
         )
         metadata["end_timestamp_utc"] = utc_now_iso()
@@ -567,11 +603,12 @@ def run_client(args: argparse.Namespace) -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run a Sarvam H100 SGLang OpenAI-compatible streaming pilot."
+        description="Run an H100 SGLang OpenAI-compatible streaming pilot."
     )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--smoke", action="store_true")
     mode.add_argument("--pilot", action="store_true")
+    parser.add_argument("--model", choices=sorted(MODEL_CONFIGS), default="sarvam")
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
     parser.add_argument("--experiment-id", default=None)
     parser.add_argument("--prompts", type=Path, default=DEFAULT_PROMPTS_PATH)

@@ -110,6 +110,85 @@ ls -lh /workspace/sarvam_h100_sglang_pilot_results.zip
 
 Download the zip and terminate the pod.
 
+## 8. Optional Qwen Comparison
+
+Only do this after the Sarvam artifacts are zipped. Stop the Sarvam SGLang
+server, then launch Qwen on the same port. Do not run both models at once.
+
+```bash
+pkill -f "sglang.launch_server" || true
+sleep 5
+nvidia-smi
+df -h /workspace
+
+mkdir -p /workspace/sglang_logs
+export PYTHONPATH=/workspace/sglang/python:$PYTHONPATH
+export HF_HOME=/workspace/huggingface
+export HF_HUB_CACHE=/workspace/huggingface/hub
+
+nohup python3 -m sglang.launch_server \
+  --model-path Qwen/Qwen3-30B-A3B-Instruct-2507-FP8 \
+  --host 127.0.0.1 \
+  --port 30000 \
+  --quantization modelopt_fp8 \
+  --mem-fraction-static 0.70 \
+  > /workspace/sglang_logs/qwen_h100_server.log 2>&1 &
+
+echo "PID: $!"
+tail -n 100 -f /workspace/sglang_logs/qwen_h100_server.log
+```
+
+When the server is ready, press `Ctrl-C` to stop tailing logs.
+
+```bash
+curl -s http://127.0.0.1:30000/v1/models | head
+```
+
+Run Qwen smoke:
+
+```bash
+cd /workspace/indicservebench
+git pull --ff-only
+
+QWEN_EXP=qwen_h100_sglang_smoke_$(date -u +%Y%m%dT%H%M%SZ)
+PYTHONPATH=src python3 -m indicservebench.h100_sglang_sarvam_pilot \
+  --smoke \
+  --model qwen \
+  --experiment-id "$QWEN_EXP" \
+  --base-url http://127.0.0.1:30000 \
+  --output-root /workspace/indicservebench_results/qwen_h100_sglang_pilot
+
+cat /workspace/indicservebench_results/qwen_h100_sglang_pilot/$QWEN_EXP/human_readable_summary.md
+```
+
+If smoke succeeds, run the 48-prompt Qwen pilot:
+
+```bash
+QWEN_EXP=qwen_h100_sglang_pilot_$(date -u +%Y%m%dT%H%M%SZ)
+PYTHONPATH=src python3 -m indicservebench.h100_sglang_sarvam_pilot \
+  --pilot \
+  --model qwen \
+  --experiment-id "$QWEN_EXP" \
+  --base-url http://127.0.0.1:30000 \
+  --output-root /workspace/indicservebench_results/qwen_h100_sglang_pilot
+
+cat /workspace/indicservebench_results/qwen_h100_sglang_pilot/$QWEN_EXP/human_readable_summary.md
+```
+
+Zip Qwen artifacts:
+
+```bash
+cd /workspace
+zip -r qwen_h100_sglang_pilot_results.zip \
+  indicservebench_results/qwen_h100_sglang_pilot \
+  sglang_logs/qwen_h100_server.log
+
+ls -lh /workspace/qwen_h100_sglang_pilot_results.zip
+```
+
+Label it as an optional same-H100 comparison only. Do not claim production
+serving performance or tokenizer causality from the Qwen comparison.
+
 ## Meeting Label
 
 Use this exact label:
